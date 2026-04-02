@@ -598,7 +598,7 @@ const params: GetAllParams = {
   isDeleted: false,
 };
 
-let res = await getAllInvoice(localCompanyId, params);
+let res = await getAllItems(params, localCompanyId);
       if (res.success) {
         setItemListData(res.data);
       } else {

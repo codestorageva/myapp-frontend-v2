@@ -156,16 +156,16 @@ async function login(credentials: Credentials) {
   }),
 });
 
-console.log("STATUS:", response.status);
-console.log("HEADERS:", response.headers.get("content-type"));
+// console.log("STATUS:", response.status);
+// console.log("HEADERS:", response.headers.get("content-type"));
 
-const text = await response.text();
-console.log("RAW RESPONSE:", text);
+// const text = await response.text();
+// console.log("RAW RESPONSE:", text);
 
-const data = JSON.parse(text || "{}");
-console.log("PARSED RESPONSE:", data);
+// const data = JSON.parse(text || "{}");
+// console.log("PARSED RESPONSE:", data);
 
-return data;
+// return data;
 
     console.log("LOGIN RESPONSE STATUS:", response.status);
 

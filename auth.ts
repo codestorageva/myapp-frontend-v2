@@ -11,7 +11,7 @@ interface Credentials {
 
 async function login(credentials: Credentials) {
   try {
-    const response = await fetch(`${SERVER_URL}/auth/login`, {  // append /auth/login directly
+     const response = await fetch(`${SERVER_URL}${API_ENDPOINTS.login}`, {  // append /auth/login directly
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

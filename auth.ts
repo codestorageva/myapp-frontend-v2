@@ -143,21 +143,28 @@ const SERVER_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 async function login(credentials: Credentials) {
   try {
+    console.log("SERVER_URL:", SERVER_URL);
+    console.log("LOGIN URL:", `${SERVER_URL}${API_ENDPOINTS.login}`);
+    console.log("LOGIN CREDENTIAL EMAIL:", credentials.email);
+
     const response = await fetch(`${SERVER_URL}${API_ENDPOINTS.login}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(credentials),
+      body: JSON.stringify({
+        email: credentials.email,
+        password: credentials.password,
+      }),
+      cache: "no-store",
     });
 
-    const data = await response.json();
+    console.log("LOGIN RESPONSE STATUS:", response.status);
 
+    const data = await response.json();
     console.log("BACKEND RESPONSE:", data);
 
-    // 🔥 IMPORTANT CHANGE
-    return data; // direct return karo
-
+    return data;
   } catch (error: any) {
-    console.error("LOGIN ERROR:", error);
+    console.error("LOGIN API ERROR:", error?.message);
     return null;
   }
 }
@@ -178,31 +185,46 @@ export const authOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
+
       async authorize(credentials) {
-  const user = await login(credentials as Credentials);
+  console.log("AUTHORIZE START:", credentials);
 
-  console.log("AUTHORIZE USER:", user);
-
-  // 🔥 ADD THIS
-  if (!user || !user.authToken) {
+  if (!credentials?.email || !credentials?.password) {
+    console.log("AUTHORIZE FAILED: missing credentials");
     return null;
   }
 
+  const user = await login({
+    email: credentials.email as string,
+    password: credentials.password as string,
+  });
 
-        return {
-          id: user.email,
-          email: user.email,
-          success: user.success,
-          successCode: user.successCode,
-          roleId: user.roleId,
-          roleName: user.roleName,
-          fullName: user.fullName,
-          userName: user.userName,
-          mobNo: user.mobNo,
-          authToken: user.authToken,
-          permissionList: user.permissionList || [],
-        };
-      },
+  console.log("AUTHORIZE USER:", user);
+
+  if (!user) {
+    console.log("AUTHORIZE FAILED: user is null");
+    return null;
+  }
+
+  if (!user.authToken) {
+    console.log("AUTHORIZE FAILED: authToken missing");
+    return null;
+  }
+
+  return {
+    id: user.email,
+    email: user.email,
+    success: user.success,
+    successCode: user.successCode,
+    roleId: user.roleId,
+    roleName: user.roleName,
+    fullName: user.fullName,
+    userName: user.userName,
+    mobNo: user.mobNo,
+    authToken: user.authToken,
+    permissionList: user.permissionList || [],
+  };
+}
     }),
   ],
   callbacks: {

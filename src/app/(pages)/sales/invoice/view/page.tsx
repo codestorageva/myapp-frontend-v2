@@ -87,7 +87,18 @@ const ViewInvoice = () => {
         try {
             setIsLoading(true);
             const localCompanyId = localStorage.getItem("selectedCompanyId") || "";
-            const res = await getAllInvoice(localCompanyId);
+
+const params = {
+  keyword: "",
+  pageNumber: 0,
+  pageSize: 10,
+  sortBy: "invoiceId",
+  sortDirection: "asc",
+  status: true,
+  isDeleted: false,
+};
+
+const res = await getAllInvoice(localCompanyId, params);
             if (res.success) {
                 const formattedData: DataRow[] = res.data.map((invoice: InvoiceData) => ({
                     no: invoice.invoiceId,

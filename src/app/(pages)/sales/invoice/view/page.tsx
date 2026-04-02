@@ -99,18 +99,18 @@ const params = {
 };
 
 const res = await getAllInvoice(localCompanyId, params);
-            if (res.success) {
-                const formattedData: DataRow[] = res.data.map((invoice: InvoiceData) => ({
-                    no: invoice.invoiceId,
-                    invoiceNumber: invoice.invoicePrefix + " " + invoice.invoiceNumber,
-                    action: <button onClick={() => { }}></button>
-                }))
-                setDataRows(formattedData);
-            }
-            else {
-                setDataRows([]);
-            }
-        }
+
+if (res.success) {
+    const formattedData: DataRow[] = res.data.map((invoice: any) => ({
+        no: invoice.invoiceId,
+        invoiceNumber: (invoice.invoicePrefix ?? "") + " " + (invoice.invoiceNumber ?? ""),
+        action: <button onClick={() => { }}></button>
+    }));
+
+    setDataRows(formattedData);
+} else {
+    setDataRows([]);
+}
         catch (err: any) { }
         finally {
             setIsLoading(false);

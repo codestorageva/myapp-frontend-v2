@@ -594,7 +594,7 @@ const params: GetAllParams = {
   pageSize: 10,
   sortBy: "invoiceId",
   sortDirection: "asc",
-  status: true      // 🔥 add this
+  status: true,    // 🔥 add this
   isDeleted: false,
 };
 

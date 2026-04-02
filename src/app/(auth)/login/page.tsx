@@ -282,46 +282,55 @@ const Login = () => {
   }, [])
 
   const handleLogin = async () => {
-    try {
-      setIsLoading(true)
-      setError(undefined)
-      setFormErrors({})
+  try {
+    console.log("STEP 1: handleLogin called");
+    setIsLoading(true)
+    setError(undefined)
+    setFormErrors({})
 
-      await LoginSchema.validate(input, { abortEarly: false })
+    console.log("STEP 2: input =", input);
 
-      const res: SignInResponse | undefined = await signIn('credentials', {
-        email: input.email,
-        password: input.password,
-        redirect: false,
-      })
+    await LoginSchema.validate(input, { abortEarly: false })
+    console.log("STEP 3: validation passed");
 
-      if (!res?.error) {
-        if (isRememberMe) {
-          localStorage.setItem('savedEmail', input.email)
-        } else {
-          localStorage.removeItem('savedEmail')
-        }
+    const res: SignInResponse | undefined = await signIn('credentials', {
+      email: input.email,
+      password: input.password,
+      redirect: false,
+    })
 
-        toast.success('Login successful!')
-        router.replace('/')
+    console.log("STEP 4: signIn response =", res);
+
+    if (!res?.error) {
+      if (isRememberMe) {
+        localStorage.setItem('savedEmail', input.email)
       } else {
-        setError('Invalid credentials')
-        toast.error('Authentication failed', { autoClose: 3000 })
+        localStorage.removeItem('savedEmail')
       }
-    } catch (err: any) {
-      if (err.name === 'ValidationError') {
-        const errors: Partial<LoginFormFields> = {}
-        err.inner.forEach((e: Yup.ValidationError) => {
-          if (e.path) errors[e.path as keyof LoginFormFields] = e.message
-        })
-        setFormErrors(errors)
-      } else {
-        setError('Something went wrong.')
-      }
-    } finally {
-      setIsLoading(false)
+
+      toast.success('Login successful!')
+      router.replace('/')
+    } else {
+      console.log("STEP 5: signIn error =", res.error);
+      setError(res.error || 'Authentication failed')
+      toast.error(res.error || 'Authentication failed', { autoClose: 3000 })
     }
+  } catch (err: any) {
+    console.log("STEP ERROR:", err);
+
+    if (err.name === 'ValidationError') {
+      const errors: Partial<LoginFormFields> = {}
+      err.inner.forEach((e: Yup.ValidationError) => {
+        if (e.path) errors[e.path as keyof LoginFormFields] = e.message
+      })
+      setFormErrors(errors)
+    } else {
+      setError(err?.message || 'Something went wrong.')
+    }
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <div

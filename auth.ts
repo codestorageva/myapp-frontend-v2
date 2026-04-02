@@ -1,7 +1,6 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-  import  type {NextAuthConfig}  from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import NextAuth from "next-auth";
-import { SERVER_URL } from "@/core/constants";
 import { API_ENDPOINTS } from "@/core/constants/api_endpoint";
 
 interface Credentials {
@@ -9,32 +8,49 @@ interface Credentials {
   password: string;
 }
 
+const SERVER_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
 async function login(credentials: Credentials) {
   try {
-    const response = await fetch(`${SERVER_URL}${API_ENDPOINTS.login}`, {  // append /auth/login directly
+    console.log("SERVER_URL:", SERVER_URL);
+    console.log("LOGIN URL:", `${SERVER_URL}${API_ENDPOINTS.login}`);
+
+    const response = await fetch(`${SERVER_URL}${API_ENDPOINTS.login}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: credentials.email,
         password: credentials.password,
       }),
+      cache: "no-store",
     });
 
-    const data = await response.json();
-    console.log("API login response:", data);
+    console.log("STATUS:", response.status);
+    console.log("CONTENT-TYPE:", response.headers.get("content-type"));
 
-    if (data.success) return data;
-    throw new Error(data.message || "Login failed");
+    const rawText = await response.text();
+    console.log("RAW RESPONSE:", rawText);
+
+    let data = null;
+    try {
+      data = JSON.parse(rawText);
+    } catch (e) {
+      console.log("JSON PARSE FAILED");
+    }
+
+    console.log("PARSED RESPONSE:", data);
+    return data;
   } catch (error: any) {
-    throw new Error(error.message);
+    console.error("LOGIN API ERROR:", error?.message);
+    return null;
   }
 }
 
-export const authOptions  = {
+export const authOptions = {
   session: {
     strategy: "jwt",
   },
-  secret: "thisissecret", 
+  secret: process.env.NEXTAUTH_SECRET || "thisissecret",
   trustHost: true,
   pages: {
     signIn: "/login",
@@ -42,44 +58,63 @@ export const authOptions  = {
   providers: [
     CredentialsProvider({
       name: "credentials",
-      credentials: {},
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
       async authorize(credentials) {
-        try {
-          const user = await login(credentials as Credentials);          
-          return user;
-        } catch (error) {
-          throw new Error("Failed to login");
+        console.log("AUTHORIZE START");
+
+        if (!credentials?.email || !credentials?.password) {
+          console.log("AUTHORIZE FAILED: missing credentials");
+          return null;
         }
+
+        const user = await login({
+          email: credentials.email as string,
+          password: credentials.password as string,
+        });
+
+        console.log("AUTHORIZE USER:", user);
+
+        if (!user || !user.authToken) {
+          console.log("AUTHORIZE FAILED: no authToken");
+          return null;
+        }
+
+        return {
+          id: user.email,
+          email: user.email,
+          roleName: user.roleName,
+          authToken: user.authToken,
+          permissionList: user.permissionList || [],
+        };
       },
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
-        token = { ...token, ...user };
+        token.email = (user as any).email;
+        token.roleName = (user as any).roleName;
+        token.authToken = (user as any).authToken;
+        token.permissionList = (user as any).permissionList;
       }
       return token;
     },
-    session({ session, token }) {
+
+    async session({ session, token }) {
       session.user = {
-        ...session.user,
-        success: token.success as boolean,
-        successCode: token.successCode as string,
-        email:token.email as string,
-        roleId: token.roleId as number,
-        roleName: token.roleName as string,
-        fullName: token.fullName as string,
-        userName: token.userName as string,
-        mobNo: token.mobNo as string,
-        authToken: token.authToken as string
-      };
+        ...(session.user as any),
+        email: token.email,
+        roleName: token.roleName,
+        authToken: token.authToken,
+        permissionList: token.permissionList,
+      } as any;
 
       return session;
     },
   },
-} satisfies NextAuthConfig ;
+} satisfies NextAuthConfig;
 
-
-const { handlers, auth,signOut } = NextAuth(authOptions);
-
-export { handlers, auth, signOut };
+export const { handlers, auth, signOut, signIn } = NextAuth(authOptions);

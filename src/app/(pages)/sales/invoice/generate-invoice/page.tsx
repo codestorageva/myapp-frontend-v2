@@ -586,8 +586,19 @@ let res = await getAllInvoice(localCompanyId, params);
 
   const getAll = async () => {
     try {
-      const localCompanyId = localStorage.getItem("selectedCompanyId");
-      let res = await getAllItems(param as GetAllParams, localCompanyId ?? "");
+      const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
+
+const params: GetAllParams = {
+  keyword: "",
+  pageNumber: 0,
+  pageSize: 10,
+  sortBy: "invoiceId",
+  sortDirection: "asc",
+  status: "true",      // 🔥 add this
+  isDeleted: false,
+};
+
+let res = await getAllInvoice(localCompanyId, params);
       if (res.success) {
         setItemListData(res.data);
       } else {

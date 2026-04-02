@@ -27,9 +27,9 @@ const ViewInvoice = () => {
     const [searchData, setSearchTableData] = useState('');
     const router = useRouter();
 
-    useEffect(() => {
-        getAll();
-    }, []);
+   useEffect(() => {
+    getAllInvoices();
+}, []);
 
     const param: Partial<GetAllParams> = {
         sortDirection: 'asc',
@@ -83,39 +83,47 @@ const ViewInvoice = () => {
         },
     ];
 
-    const getAll = async () => {
-        try {
-            setIsLoading(true);
-            const localCompanyId = localStorage.getItem("selectedCompanyId") || "";
+    const getAllInvoices = async () => {
+  try {
+    setIsLoading(true);
 
-const params = {
-  keyword: "",
-  pageNumber: 0,
-  pageSize: 10,
-  sortBy: "invoiceId",
-  sortDirection: "asc",
-  status: true,
-  isDeleted: false,
-};
+    const localCompanyId = localStorage.getItem("selectedCompanyId") || "";
 
-const res = await getAllInvoice(localCompanyId, params);
+    const params = {
+      keyword: "",
+      pageNumber: 0,
+      pageSize: 10,
+      sortBy: "invoiceId",
+      sortDirection: "asc",
+      status: true,
+      isDeleted: false,
+    };
 
-if (res.success) {
-    const formattedData: DataRow[] = res.data.map((invoice: any) => ({
+    const res = await getAllInvoice(localCompanyId, params);
+
+    if (res.success) {
+      const formattedData: DataRow[] = res.data.map((invoice: any) => ({
         no: invoice.invoiceId,
-        invoiceNumber: (invoice.invoicePrefix ?? "") + " " + (invoice.invoiceNumber ?? ""),
-        action: <button onClick={() => { }}></button>
-    }));
+        invoiceNumber: `${invoice.invoicePrefix ?? ""} ${invoice.invoiceNumber ?? ""}`.trim(),
+        action: (
+          <button onClick={() => {}}>
+            View
+          </button>
+        ),
+      }));
 
-    setDataRows(formattedData);
-} else {
-    setDataRows([]);
-}
-        catch (err: any) { }
-        finally {
-            setIsLoading(false);
-        }
+      setDataRows(formattedData);
+    } else {
+      setDataRows([]);
     }
+
+  } catch (err: any) {
+    console.log(err);
+    setDataRows([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
     const customStyles = {
         headCells: {

@@ -15,6 +15,9 @@ async function login(credentials: Credentials) {
     console.log("SERVER_URL:", SERVER_URL);
     console.log("LOGIN URL:", `${SERVER_URL}${API_ENDPOINTS.login}`);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
     const response = await fetch(`${SERVER_URL}${API_ENDPOINTS.login}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -23,7 +26,10 @@ async function login(credentials: Credentials) {
         password: credentials.password,
       }),
       cache: "no-store",
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     console.log("STATUS:", response.status);
     console.log("CONTENT-TYPE:", response.headers.get("content-type"));
@@ -41,7 +47,7 @@ async function login(credentials: Credentials) {
     console.log("PARSED RESPONSE:", data);
     return data;
   } catch (error: any) {
-    console.error("LOGIN API ERROR:", error?.message);
+    console.error("LOGIN API ERROR:", error?.name, error?.message);
     return null;
   }
 }
@@ -63,32 +69,33 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.log("AUTHORIZE START");
+  console.log("AUTHORIZE START");
 
-        if (!credentials?.email || !credentials?.password) {
-          console.log("AUTHORIZE FAILED: missing credentials");
-          return null;
-        }
+  if (!credentials?.email || !credentials?.password) {
+    console.log("AUTHORIZE FAILED: missing credentials");
+    return null;
+  }
 
-        const user = await login({
-          email: credentials.email as string,
-          password: credentials.password as string,
-        });
+  const user = await login({
+    email: credentials.email as string,
+    password: credentials.password as string,
+  });
 
-        console.log("AUTHORIZE USER:", user);
+  console.log("AUTHORIZE USER:", user);
 
-        if (!user || !user.authToken) {
-          console.log("AUTHORIZE FAILED: no authToken");
-          return null;
-        }
+  if (!user || !user.authToken) {
+    console.log("AUTHORIZE FAILED: no authToken");
+    return null;
+  }
 
-        return {
-          id: user.email,
-          email: user.email,
-          roleName: user.roleName,
-          authToken: user.authToken,
-          permissionList: user.permissionList || [],
-        };
+  return {
+    id: user.email,
+    email: user.email,
+    roleName: user.roleName,
+    authToken: user.authToken,
+    permissionList: user.permissionList || [],
+  };
+
       },
     }),
   ],

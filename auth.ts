@@ -148,14 +148,24 @@ async function login(credentials: Credentials) {
     console.log("LOGIN CREDENTIAL EMAIL:", credentials.email);
 
     const response = await fetch(`${SERVER_URL}${API_ENDPOINTS.login}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: credentials.email,
-        password: credentials.password,
-      }),
-      cache: "no-store",
-    });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    email: credentials.email,
+    password: credentials.password,
+  }),
+});
+
+console.log("STATUS:", response.status);
+console.log("HEADERS:", response.headers.get("content-type"));
+
+const text = await response.text();
+console.log("RAW RESPONSE:", text);
+
+const data = JSON.parse(text || "{}");
+console.log("PARSED RESPONSE:", data);
+
+return data;
 
     console.log("LOGIN RESPONSE STATUS:", response.status);
 

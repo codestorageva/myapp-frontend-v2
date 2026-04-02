@@ -1,6 +1,6 @@
 'use client'
 import Layout from '@/app/component/MainLayout'
-import React, { JSX, useEffect, useState } from 'react'
+import React, { JSX, useEffect, useMemo, useState } from 'react'
 // import { getAllInvoice, InvoiceData } from '../../generate-invoice/generate-invoice';
 import { useRouter } from 'next/navigation';
 import DataTable, { TableColumn } from 'react-data-table-component';
@@ -17,9 +17,30 @@ import DeleteRestoreModal from '@/app/component/modal';
 import { GetAllParams } from '@/app/(pages)/items/items';
 import { deleteInvoice, getAllDeletedInvoice, getAllInvoice, InvoiceData, restoreInvoice } from '../generate-invoice/generate-invoice';
 import { GoSync } from 'react-icons/go';
+import { SummeryReportData } from '@/app/(pages)/reports/reports';
 export interface DataRow {
     no: number;
+    date: string;
+    particulars: string;
+    invoiceId: number;
+    invoiceType: string;
     invoiceNumber: string;
+    quantity: number;
+    material: string;
+    value: string;
+    royaltyValue: string;
+    dmf: string;
+    nmet: string;
+    totalTaxableValue: string;
+    sgst: string;
+    cgst: string;
+    igst: string;
+    total: string;
+    roundOff: string;
+    grandTotal: string;
+    paymentReceived: string;
+    closingBalance: string;
+    isTotal?: boolean;
     action: JSX.Element;
 }
 
@@ -37,6 +58,9 @@ const ViewInvoice = () => {
         getAll();
     }, []);
 
+    const totalCellClass = (row: DataRow) =>
+        row.isTotal ? "font-bold text-black" : "";
+
     const param: Partial<GetAllParams> = {
         sortDirection: 'asc',
         isDeleted: true
@@ -48,21 +72,219 @@ const ViewInvoice = () => {
             selector: (row) => row.no.toString(),
             sortable: true,
             width: '100px',
+            cell: (row) => (
+                <span className={totalCellClass(row)}>
+                    {row.isTotal ? "Total" : row.no}
+                </span>
+            ),
         },
         {
-            name: 'INVOICE NUMBER',
+            name: "Date",
+            selector: (row) => row.date,
+            sortable: true,
+            width: "110px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.isTotal ? "" : row.date}
+                </span>
+            ),
+        },
+        {
+            name: "Particulars",
+            selector: (row) => row.particulars,
+            sortable: true,
+            grow: 2,
+            width: "180px",
+            wrap: true,
+            cell: (row) => (
+                <span className={totalCellClass(row)}>
+                    {row.isTotal ? "" : row.particulars}
+                </span>
+            ),
+        },
+        {
+            name: "Invoice ID",
+            selector: (row) => row.invoiceId,
+            sortable: true,
+            width: "110px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.isTotal ? "" : row.invoiceId}
+                </span>
+            ),
+        },
+        {
+            name: "Invoice Type",
+            selector: (row) => row.invoiceType,
+            sortable: true,
+            width: "120px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.isTotal ? "" : row.invoiceType || "Sales"}
+                </span>
+            ),
+        },
+        {
+            name: "Invoice No.",
             selector: (row) => row.invoiceNumber,
             sortable: true,
+            width: "150px",
+            cell: (row) =>
+                row.isTotal ? (
+                    <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}></span>
+                ) : (
+                    <span
+                        onClick={() => {
+                            const encodedId = encodeId(row.invoiceId);
+                            router.push(`/sales/invoice/new-invoice/${encodedId}`);
+                        }}
+                        className="cursor-pointer text-blue-600"
+                    >
+                        {row.invoiceNumber}
+                    </span>
+                ),
+        },
+        {
+            name: "Material",
+            selector: (row) => row.material,
+            sortable: true,
+            grow: 2,
+            width: "200px",
+            cell: (row) => <span className={totalCellClass(row)}>{row.material}</span>,
+        },
+        {
+            name: "Qty",
+            selector: (row) => row.quantity,
+            sortable: true,
+            width: "100px",
             cell: (row) => (
-                <span
-                    onClick={() => {
-                        const encodedId = encodeId(row.no);
-                        router.push(`/sales/invoice/new-invoice/${encodedId}`);
-                        // router.push(`${ROUTES.view_invoice}/${encodedId}`);
-                    }}
-                    className='cursor-pointer text-blue-600'
-                >
-                    {row.invoiceNumber}
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.isTotal
+                        ? row.quantity.toLocaleString("en-IN")
+                        : row.quantity
+                            ? row.quantity.toLocaleString("en-IN")
+                            : ""}
+                </span>
+            ),
+        },
+        {
+            name: "Value",
+            selector: (row) => parseAmount(row.value),
+            sortable: true,
+            width: "150px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.value}
+                </span>
+            ),
+        },
+        {
+            name: "Royalty",
+            selector: (row) => parseAmount(row.royaltyValue),
+            sortable: true,
+            width: "150px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.royaltyValue}
+                </span>
+            ),
+        },
+        {
+            name: "DMF",
+            selector: (row) => parseAmount(row.dmf),
+            sortable: true,
+            width: "150px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.dmf}
+                </span>
+            ),
+        },
+        {
+            name: "NMET",
+            selector: (row) => parseAmount(row.nmet),
+            sortable: true,
+            width: "150px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.nmet}
+                </span>
+            ),
+        },
+        {
+            name: "Taxable Value",
+            selector: (row) => parseAmount(row.totalTaxableValue),
+            sortable: true,
+            width: "150px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.totalTaxableValue}
+                </span>
+            ),
+        },
+        {
+            name: "Total GST",
+            selector: (row) => parseAmount(row.sgst),
+            sortable: true,
+            width: "120px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {(parseFloat(row.sgst) + parseFloat(row.cgst) + parseFloat(row.igst)).toFixed(2)}
+                </span>
+            ),
+        },
+        // {
+        //     name: "CGST",
+        //     selector: (row) => parseAmount(row.cgst),
+        //     sortable: true,
+        //     width: "120px",
+        //     cell: (row) => (
+        //         <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+        //             {row.cgst}
+        //         </span>
+        //     ),
+        // },
+        // {
+        //     name: "IGST",
+        //     selector: (row) => parseAmount(row.igst),
+        //     sortable: true,
+        //     width: "150px",
+        //     cell: (row) => (
+        //         <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+        //             {row.igst}
+        //         </span>
+        //     ),
+        // },
+        {
+            name: "Total",
+            selector: (row) => parseAmount(row.total),
+            sortable: true,
+            width: "150px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.total}
+                </span>
+            ),
+        },
+        {
+            name: "Round Off",
+            selector: (row) => parseAmount(row.roundOff),
+            sortable: true,
+            width: "120px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.roundOff}
+                </span>
+            ),
+        },
+        {
+            name: "Grand Total",
+            selector: (row) => parseAmount(row.grandTotal),
+            sortable: true,
+            width: "160px",
+            cell: (row) => (
+                <span className={`block text-right whitespace-nowrap ${totalCellClass(row)}`}>
+                    {row.grandTotal}
                 </span>
             ),
         },
@@ -70,11 +292,19 @@ const ViewInvoice = () => {
             name: 'Action',
             width: '100PX',
             cell: (row: any) => (
-                <div className="flex flex-col items-center justify-center">
-                    <button className="bg-transparent border-none cursor-pointer" onClick={() => { setRestoreCustomerId(row.no); setIsModalOpen(true) }}>
-                        <GoSync size={18} color={Colors.gradient1} />
-                    </button>
-                </div>
+                row.isTotal ? null : (   // ✅ IMPORTANT LINE
+                    <div className="flex flex-col items-center justify-center">
+                        <button
+                            className="bg-transparent border-none cursor-pointer"
+                            onClick={() => {
+                                setRestoreCustomerId(row.no);
+                                setIsModalOpen(true);
+                            }}
+                        >
+                            <GoSync size={18} color={Colors.gradient1} />
+                        </button>
+                    </div>
+                )
             ),
             ignoreRowClick: true,
         },
@@ -106,16 +336,41 @@ const ViewInvoice = () => {
         try {
             setIsLoading(true);
             const localCompanyId = localStorage.getItem('selectedCompanyId') ?? '';
-            const res = await getAllDeletedInvoice(localCompanyId);
+            // const res = await getAllDeletedInvoice(localCompanyId);
+            const res = await getAllInvoice(localCompanyId, param as GetAllParams);
             if (res.success) {
-                const formattedData: DataRow[] = res.data.map((invoice: InvoiceData) => ({
-                    no: invoice.invoiceId,
-                    invoiceNumber: invoice.invoicePrefix + " " + invoice.invoiceNumber,
-                    action: <button onClick={() => { }}></button>
-                }))
+                const formattedData: DataRow[] = res.data
+                    .filter((report: any) => report.date !== "Total") // 👈 ADD THIS LINE
+                    .map((report: SummeryReportData, index: number) => ({
+                        no: index + 1,
+                        invoiceId: report.invoiceId || 0,
+                        date: report.date || "",
+                        particulars: report.particulars || "",
+                        invoiceType: report.invoiceType || "",
+                        invoiceNumber: report.invoiceNumber || "",
+                        quantity: report.quantity || 0,
+                        material: report.material || "",
+                        value: report.value || "0.00",
+                        royaltyValue: report.royaltyValue || "0.00",
+                        dmf: report.dmf || "0.00",
+                        nmet: report.nmet || "0.00",
+                        totalTaxableValue: report.totalTaxableValue || "0.00",
+                        sgst: report.sgst || "0.00",
+                        cgst: report.cgst || "0.00",
+                        igst: report.igst || "0.00",
+                        total: report.total || "0.00",
+                        roundOff: report.roundOff || "0.00",
+                        grandTotal: report.grandTotal || "0.00",
+                        paymentReceived: report.paymentReceived || "0.00",
+                        closingBalance: report.closingBalance || "0.00",
+                        narration: report.narration || "",
+                        isTotal: false,
+                        action: <></>
+                    })
+                    );
+
                 setDataRows(formattedData);
-            }
-            else {
+            } else {
                 setDataRows([]);
             }
         }
@@ -139,8 +394,105 @@ const ViewInvoice = () => {
             },
         },
     }
+    const filteredData = useMemo(() => {
+        return dataRows.filter((row) =>
+            Object.values(row)
+                .join(" ")
+                .toLowerCase()
+                .includes(searchData.toLowerCase())
+        );
+    }, [dataRows, searchData]);
 
-    const filteredData = dataRows.filter((row) => Object.values(row).join(' ').toLowerCase().includes(searchData.toLowerCase()));
+    const parseAmount = (val?: string): number => {
+        if (!val) return 0;
+        return Number(String(val).replace(/,/g, "").replace("₹", "").trim()) || 0;
+    };
+    const totals = useMemo(() => {
+        return filteredData.reduce(
+            (acc, row) => {
+                if (row.isTotal) return acc;
+
+                acc.quantity += row.quantity || 0;
+                acc.value += parseAmount(row.value);
+                acc.royalty += parseAmount(row.royaltyValue);
+                acc.dmf += parseAmount(row.dmf);
+                acc.nmet += parseAmount(row.nmet);
+                acc.taxable += parseAmount(row.totalTaxableValue);
+                acc.sgst += parseAmount(row.sgst);
+                acc.cgst += parseAmount(row.cgst);
+                acc.igst += parseAmount(row.igst);
+                acc.total += parseAmount(row.total);
+                acc.roundOff += parseAmount(row.roundOff);
+                acc.grandTotal += parseAmount(row.grandTotal);
+                acc.payment += parseAmount(row.paymentReceived);
+                acc.closing += parseAmount(row.closingBalance);
+                return acc;
+            },
+            {
+                quantity: 0,
+                value: 0,
+                royalty: 0,
+                dmf: 0,
+                nmet: 0,
+                taxable: 0,
+                sgst: 0,
+                cgst: 0,
+                igst: 0,
+                total: 0,
+                roundOff: 0,
+                grandTotal: 0,
+                payment: 0,
+                closing: 0,
+            }
+        );
+    }, [filteredData]);
+
+
+    const formatAmount = (value?: number): string =>
+        value !== undefined && value !== null
+            ? value.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            })
+            : "0.00";
+
+    const totalRow: DataRow = useMemo(
+        () => ({
+            no: 0,
+            date: "Total",
+            particulars: "",
+            invoiceId: 0,
+            invoiceType: "",
+            invoiceNumber: "",
+            quantity: totals.quantity,
+            material: "",
+            value: formatAmount(totals.value),
+            royaltyValue: formatAmount(totals.royalty),
+            dmf: formatAmount(totals.dmf),
+            nmet: formatAmount(totals.nmet),
+            totalTaxableValue: formatAmount(totals.taxable),
+            sgst: formatAmount(totals.sgst),
+            cgst: formatAmount(totals.cgst),
+            igst: formatAmount(totals.igst),
+            total: formatAmount(totals.total),
+            roundOff: formatAmount(totals.roundOff),
+            grandTotal: formatAmount(totals.grandTotal),
+            paymentReceived: formatAmount(totals.payment),
+            closingBalance: formatAmount(totals.closing),
+            narration: "",
+            isTotal: true,
+            action: <></>
+        }),
+        [totals]
+    );
+
+    const tableData = useMemo(() => {
+        return [...filteredData, totalRow];
+    }, [filteredData, totalRow]);
+
+    const hasValidData = useMemo(() => {
+        return filteredData.some(row => parseAmount(row.grandTotal) > 0);
+    }, [filteredData]);
 
     return (
 
@@ -180,7 +532,7 @@ const ViewInvoice = () => {
                     ) : (
                         <DataTable
                             columns={headerColumn}
-                            data={filteredData}
+                            data={hasValidData ? tableData : []}
                             fixedHeader
                             customStyles={customStyles}
                             pagination

@@ -295,67 +295,33 @@ const ViewInvoice = () => {
             name: 'Action',
             width: '120PX',
             cell: (row: any) => (
-                // <div style={{
-                //     display: 'flex',
-                //     alignItems: 'center',
-                //     justifyContent: 'center',
-                //     width: '100%',
-                //     height: '100%',
-                // }}>
-                //     <button
-                //         style={{
-                //             background: 'none',
-                //             border: 'none',
-                //             cursor: 'pointer',
-                //             padding: 0,
-                //         }}
-                //         onClick={() => {
-                //             const encodedId = encodeId(row.no);
-                //             router.push(`/sales/invoice/new-invoice/${encodedId}`);
-                //             // router.push(`${ROUTES.view_invoice}/${encodedId}`);
-                //         }}
-                //     >
-                //         <img src="/assets/icons/view.png" alt="view" width={15} height={15} />
-                //     </button>
-                // </div>
-                <div style={{ display: "flex", gap: "5px" }}>
-                    <button
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                        }}
-                        onClick={() => {
+                row.isTotal ? null : (   // ✅ IMPORTANT
+                    <div style={{ display: "flex", gap: "5px" }}>
+                        <button onClick={() => {
                             const encodedId = encodeId(row.no);
                             router.push(`/sales/invoice/new-invoice/${encodedId}`);
-                            // router.push(`${ROUTES.view_invoice}/${encodedId}`);
-                        }}
-                    >
-                        <img src="/assets/icons/view.png" alt="view" width={20} height={20} />
-                    </button>
-                    <button
-                        style={{ background: "none", border: "none", cursor: "pointer" }}
-                        onClick={() => {
+                        }}>
+                            <img src="/assets/icons/view.png" width={20} />
+                        </button>
+
+                        <button onClick={() => {
                             const secureId = encodeId(row.no);
                             router.replace(`/sales/invoice/edit-invoice/${secureId}`)
-                        }}
-                    >
-                        <img src='/assets/icons/edit.png' width={20} height={20} />
-                    </button>
-                    <button
-                        style={{ background: "none", border: "none", cursor: "pointer" }}
-                        onClick={() => {
+                        }}>
+                            <img src='/assets/icons/edit.png' width={20} />
+                        </button>
+
+                        <button onClick={() => {
                             setCustomerId(row.no);
                             handleShow();
-                        }}
-                    >
-                        <img src='/assets/icons/delete.png' width={15} />
-                    </button>
-                </div >
+                        }}>
+                            <img src='/assets/icons/delete.png' width={15} />
+                        </button>
+                    </div>
+                )
             ),
             ignoreRowClick: true,
-        },
+        }
     ];
 
     const handleShow = () => setIsModalOpen(true);
@@ -383,7 +349,7 @@ const ViewInvoice = () => {
         try {
             setIsLoading(true);
             const localCompanyId = localStorage.getItem('selectedCompanyId') ?? '';
-            const res = await getAllInvoice(localCompanyId);
+            const res = await getAllInvoice(localCompanyId, param as GetAllParams);
 
             if (res.success) {
                 const formattedData: DataRow[] = res.data
@@ -540,7 +506,9 @@ const ViewInvoice = () => {
         return [...filteredData, totalRow];
     }, [filteredData, totalRow]);
 
-
+    const hasValidData = useMemo(() => {
+        return filteredData.some(row => parseAmount(row.grandTotal) > 0);
+    }, [filteredData]);
     return (
 
         <div className="relative w-full h-full p-5">
@@ -586,7 +554,7 @@ const ViewInvoice = () => {
                         <DataTable
                             columns={headerColumn}
                             // data={filteredData}
-                            data={tableData}
+                            data={hasValidData ? tableData : []}
                             fixedHeader
                             customStyles={customStyles}
                             pagination

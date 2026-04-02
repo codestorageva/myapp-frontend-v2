@@ -8,6 +8,7 @@ import { CustomerData } from "../../../customer/customer";
 import { MiningCharges, OtherCharges } from "@/app/types/invoice";
 import { Update } from "next/dist/build/swc/types";
 import { SummeryReportData } from "@/app/(pages)/reports/reports";
+import { GetAllParams } from "@/app/(pages)/items/items";
 
 export interface GenerateInvoiceResponse {
   success: boolean;
@@ -270,11 +271,16 @@ export async function getAllInvoiceById({
 
 export async function getAllInvoice(
   localCompanyId: string,
+  params: GetAllParams
 ): Promise<GetAllInvoiceResponse> {
   try {
-    console.log( `${SERVER_URL}${API_DATABASE_ENDPOINT.invoice.getAll}?companyId=${localCompanyId}`)
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([_, value]) => value !== undefined && value !== "")
+    );
+    const queryString = new URLSearchParams(filteredParams as Record<string, string>).toString();
+    console.log(`${SERVER_URL}${API_DATABASE_ENDPOINT.invoice.invoiceReport}?companyId=${localCompanyId}&${queryString}`)
     const res = await axios.get(
-      `${SERVER_URL}${API_DATABASE_ENDPOINT.invoice.invoiceReport}?companyId=${localCompanyId}`,
+      `${SERVER_URL}${API_DATABASE_ENDPOINT.invoice.invoiceReport}?companyId=${localCompanyId}&${queryString}`,
       {
         headers: {
           Authorization: (await auth())?.user.authToken ?? "",

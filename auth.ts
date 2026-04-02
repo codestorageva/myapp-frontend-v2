@@ -146,24 +146,18 @@ async function login(credentials: Credentials) {
     const response = await fetch(`${SERVER_URL}${API_ENDPOINTS.login}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: credentials.email,
-        password: credentials.password,
-      }),
-      cache: "no-store",
+      body: JSON.stringify(credentials),
     });
 
     const data = await response.json();
 
     console.log("BACKEND RESPONSE:", data);
 
-    if (response.ok) {
-      return data;
-    }
+    // 🔥 IMPORTANT CHANGE
+    return data; // direct return karo
 
-    return null;
   } catch (error: any) {
-    console.error("LOGIN API ERROR:", error?.message);
+    console.error("LOGIN ERROR:", error);
     return null;
   }
 }
@@ -185,20 +179,15 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+  const user = await login(credentials as Credentials);
 
-        const user = await login({
-          email: credentials.email as string,
-          password: credentials.password as string,
-        });
+  console.log("AUTHORIZE USER:", user);
 
-        console.log("AUTHORIZE USER:", user);
+  // 🔥 ADD THIS
+  if (!user || !user.authToken) {
+    return null;
+  }
 
-        if (!user) {
-          return null;
-        }
 
         return {
           id: user.email,

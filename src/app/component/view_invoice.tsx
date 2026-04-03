@@ -18,22 +18,23 @@ import { getCompanyById } from '../(pages)/dashboard-page/dashboard';
 type Props = {
     copyLabel?: string;
     // params?: Promise<{ id: string }>;
-    invoiceId: string
+    invoiceId: string;
+    initialCompanyData?: CompanyData;
+    initialInvoiceData?: InvoiceData;
 }
-const PreviewInvoice: FC<Props> = ({ copyLabel, invoiceId }) => {
+const PreviewInvoice: FC<Props> = ({ copyLabel, invoiceId, initialCompanyData, initialInvoiceData }) => {
 
     // const invoiceRef = useRef<HTMLDivElement>(null);
     const { invoiceRef } = useInvoicePrint()
     const router = useRouter();
-    const [companyData, setCompanyData] = useState<CompanyData>();
-    const [isLoading, setIsLoading] = useState(true);
+    const [companyData, setCompanyData] = useState<CompanyData | undefined>(initialCompanyData); const [isLoading, setIsLoading] = useState(true);
     // let id = '';
     // if (params) {
     //     const resolvedParams = use(params);
     //     id = resolvedParams.id;
     // } 
 
-    const [data, setData] = useState<InvoiceData>();
+    const [data, setData] = useState<InvoiceData | undefined>(initialInvoiceData);
     const items = data?.items ?? [];
     const [isOutOfGujarat, setIsOutOfGujarat] = useState(false)
     // const handleDownload = async () => {
@@ -155,12 +156,13 @@ const PreviewInvoice: FC<Props> = ({ copyLabel, invoiceId }) => {
     };
 
     useEffect(() => {
-        getCompanyDetails();
-        if (invoiceId !== '') {
+        if (!companyData) {
+            getCompanyDetails();
+        }
+        if (invoiceId && !data) {
             getInvoiceDetails();
         }
-    }, [])
-
+    }, [invoiceId])
     const getInvoiceDetails = async () => {
         try {
             const decryptedId = decodeId(invoiceId) ?? '';

@@ -14,20 +14,22 @@ import { getAllInvoiceById, InvoiceData } from '../(pages)/sales/invoice/generat
 type InvoiceProps = {
     copyLabel?: string;
     // params?: Promise<{ id: string }>
-    invoiceId: string
+    invoiceId: string;
+    initialCompanyData?: CompanyData;
+    initialInvoiceData?: InvoiceData;
 }
 
-const NewInvoice = ({ copyLabel, invoiceId }: InvoiceProps) => {
+const NewInvoice = ({ copyLabel, invoiceId, initialCompanyData, initialInvoiceData }: InvoiceProps) => {
     const router = useRouter();
     const { invoiceRef } = useInvoicePrint()
-    const [companyData, setCompanyData] = useState<CompanyData>();
+    const [companyData, setCompanyData] = useState<CompanyData | undefined>(initialCompanyData);
     const [isLoading, setIsLoading] = useState(false);
     // let id = '';
     // if (params) {
     //     const resolvedParams = use(params);
     //     id = resolvedParams.id;
     // }
-    const [data, setData] = useState<InvoiceData>();
+    const [data, setData] = useState<InvoiceData | undefined>(initialInvoiceData);
     const items = data?.items ?? [];
     const [isOutOfGujarat, setIsOutOfGujarat] = useState(false);
 
@@ -38,12 +40,15 @@ const NewInvoice = ({ copyLabel, invoiceId }: InvoiceProps) => {
     //     }
     // }, [id])
 
+
     useEffect(() => {
-        getCompanyDetails()
-        if (invoiceId) {
-            getInvoiceDetails(invoiceId)
+        if (!companyData) {
+            getCompanyDetails();
         }
-    }, [invoiceId])
+        if (invoiceId && !data) {
+            getInvoiceDetails(invoiceId);
+        }
+    }, [invoiceId]);
 
     const getCompanyDetails = async () => {
         setIsLoading(true);
@@ -275,6 +280,9 @@ const NewInvoice = ({ copyLabel, invoiceId }: InvoiceProps) => {
         totalAmount + roundOff
     const totalTaxInWords = numberToWords(totalGstAmount);
     const totalAmountInWords = numberToWords(grandTotalCalculated)
+
+    const n = (value: unknown) => Number(value ?? 0);
+
     return (
         <div className=' p-5'>
             <div ref={invoiceRef} className="invoice-print-root">
@@ -282,19 +290,19 @@ const NewInvoice = ({ copyLabel, invoiceId }: InvoiceProps) => {
 
                     <div className="flex border mb-2 min-h-[110px]">
                         <div className="w-1/3 flex items-center justify-center">
-                            {companyData?.logo === null ?
+                            {companyData?.logo ? (
                                 <img
-                                    src='/assets/images/logo.png'
+                                    src={companyData.logo}
+                                    alt="Company Logo"
+                                    className="h-24 w-auto object-contain"
+                                />
+                            ) : (
+                                <img
+                                    src="/assets/images/logo.png"
                                     alt="Company Logo"
                                     className="h-10 w-auto object-contain"
                                 />
-                                :
-                                <img
-                                    src={companyData?.logo}
-                                    //src='/assets/images/logo.png'
-                                    alt="Company Logo"
-                                    className="h-24 w-auto object-contain"
-                                />}
+                            )}
                         </div>
                         <div className="w-2/3 px-4 py-2 flex flex-col">
 
@@ -567,24 +575,34 @@ const NewInvoice = ({ copyLabel, invoiceId }: InvoiceProps) => {
                                     <td className='border p-2 text-xs' rowSpan={3}>{totalTaxInWords}</td>
                                     <td className="border text-right" colSpan={2}>Total Taxable Value</td>
                                     <td className="border text-right">-</td>
-                                    <td className="border text-right font-extrabold">{data?.totalTaxableAmount.toLocaleString('en-In', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="border text-right font-extrabold">{n(data?.totalTaxableAmount).toLocaleString('en-In', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}</td>
                                 </tr>
                                 <tr>
                                     <td className="border text-right" colSpan={2}>SGST</td>
                                     <td className="border text-right">{gstTotals?.totalSgstPercent.toFixed(2)}%</td>
-                                    <td className="border text-right">{data?.totalSgst.toLocaleString('en-In', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="border text-right">{n(data?.totalSgst).toLocaleString('en-In', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td className="border text-right" colSpan={2}>CGST</td>
                                     <td className="border text-right">{gstTotals?.totalCgstPercent.toFixed(2)}%</td>
-                                    <td className="border text-right">{data?.totalCgst.toLocaleString('en-In', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    <td className="border text-right">{n(data?.totalCgst).toLocaleString('en-In', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}</td>
                                 </tr>
                                 <tr>
                                     <td colSpan={2} rowSpan={5} className='border p-2 text-xs'>Total amount in words</td>
                                     <td className='border p-2 text-xs' rowSpan={5}>{totalAmountInWords}</td>
                                     <td className="border text-right" colSpan={2}>IGST</td>
                                     <td className="border text-right">{gstTotals?.totalIgstPercent.toFixed(2)}%</td>
-                                    <td className="border text-right">{data?.totalIgst.toFixed(2)}</td>
+                                    <td className="border text-right">{n(data?.totalIgst).toFixed(2)}</td>
                                 </tr>
                                 <tr>
                                     <td className="border text-right" colSpan={2}>TOTAL GST</td>
@@ -604,7 +622,7 @@ const NewInvoice = ({ copyLabel, invoiceId }: InvoiceProps) => {
                                 <tr>
                                     <td className="border text-right" colSpan={2}></td>
                                     <td className="border text-right">-</td>
-                                    <td className="border text-right">{data?.roundOff.toFixed(2)}</td>
+                                    <td className="border text-right">{n(data?.roundOff).toFixed(2)}</td>
                                 </tr>
                                 <tr>
                                     <td className="border text-right" colSpan={2}>GRAND TOTAL</td>

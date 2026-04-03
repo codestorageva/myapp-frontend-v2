@@ -56,10 +56,10 @@ export interface SummeryReportData {
   closingBalance: string;
   narration: string;
 }
-export async function getAllSummeryReport(): Promise<GetSummeryReportResponse> {
+export async function getAllSummeryReport(localCompanyId: string): Promise<GetSummeryReportResponse> {
   try {
     const res = await axios.get<GetSummeryReportResponse>(
-      `${SERVER_URL}${API_DATABASE_ENDPOINT.summery.getSummeryReport}`,
+      `${SERVER_URL}${API_DATABASE_ENDPOINT.summery.getSummeryReport}?companyId=${localCompanyId}`,
       {
         headers: {
           Authorization: (await auth())?.user.authToken ?? "",
@@ -75,3 +75,4 @@ export async function getAllSummeryReport(): Promise<GetSummeryReportResponse> {
     throw Error(e?.response?.data?.message || e?.message || "Failed");
   }
 }
+

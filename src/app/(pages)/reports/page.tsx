@@ -1184,8 +1184,8 @@ const Reports = () => {
   const getAll = async () => {
     try {
       setIsLoading(true);
-
-      const res = await getAllSummeryReport();
+      const localCompanyId = localStorage.getItem('selectedCompanyId') ?? '';
+      const res = await getAllSummeryReport(localCompanyId);
 
       if (res.success) {
         const formattedData: DataRow[] = res.data

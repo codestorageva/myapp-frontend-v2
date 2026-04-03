@@ -687,7 +687,7 @@ const InvoiceRightSidebar = () => {
                                     isTemplate1 ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50'
                                 }`}
                             >
-                                <span className="text-sm">Template 1</span>
+                                <span className="text-sm">Mines & Minerals</span>
                                 {isTemplate1 && <span className="h-2 w-2 bg-blue-600 rounded-full" />}
                             </button>
                             <button
@@ -696,7 +696,7 @@ const InvoiceRightSidebar = () => {
                                     isTemplate2 ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50'
                                 }`}
                             >
-                                <span className="text-sm">Template 2</span>
+                                <span className="text-sm">General</span>
                                 {isTemplate2 && <span className="h-2 w-2 bg-blue-600 rounded-full" />}
                             </button>
                         </div>

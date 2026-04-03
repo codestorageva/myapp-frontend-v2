@@ -524,13 +524,7 @@ const PreviewInvoice: FC<Props> = ({ copyLabel, invoiceId, initialCompanyData, i
         //     </button>
         // </div >
         <div>
-            {isLoading ? (
-                <div className="flex-grow">
-                    <div className="absolute inset-0 flex justify-center items-center">
-                        <Loader isInside={true} />
-                    </div>
-                </div>
-            ) : (
+           
                 <div className=' p-5'>
                     <div className=" text-black">
                         <div ref={invoiceRef} className='invoice-print-root'>
@@ -886,7 +880,7 @@ const PreviewInvoice: FC<Props> = ({ copyLabel, invoiceId, initialCompanyData, i
                     </div>
 
                 </div>
-            )}
+         
         </div>
     )
 }

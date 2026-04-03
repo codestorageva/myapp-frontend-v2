@@ -27,7 +27,9 @@ const PreviewInvoice: FC<Props> = ({ copyLabel, invoiceId, initialCompanyData, i
     // const invoiceRef = useRef<HTMLDivElement>(null);
     const { invoiceRef } = useInvoicePrint()
     const router = useRouter();
-    const [companyData, setCompanyData] = useState<CompanyData | undefined>(initialCompanyData); const [isLoading, setIsLoading] = useState(true);
+    const [companyData, setCompanyData] = useState<CompanyData | undefined>(initialCompanyData);
+    const [isLoading, setIsLoading] = useState(!initialCompanyData || !initialInvoiceData);    
+
     // let id = '';
     // if (params) {
     //     const resolvedParams = use(params);

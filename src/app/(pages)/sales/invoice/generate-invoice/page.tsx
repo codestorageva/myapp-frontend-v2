@@ -136,6 +136,7 @@ const GenerateInvoice = () => {
   const router = useRouter();
   const param: Partial<GetAllParams> = {
     sortDirection: "asc",
+    isDeleted: false
   };
   const [customerData, setCustomerData] = useState<CustomerData[]>([]);
   const [itemList, setItemListData] = useState<GetAllItemData[]>([]);
@@ -521,7 +522,7 @@ const GenerateInvoice = () => {
   const getAllInvoices = async () => {
     try {
       const localCompanyId = localStorage.getItem('selectedCompanyId');
-      let res = await getAllInvoice(param as GetAllParams, localCompanyId ?? '')
+      let res = await getAllInvoice(localCompanyId, param);
       if (res.success) {
         if (res.data.length > 0) {
           let lastInvoice = res.data[res.data.length - 1];

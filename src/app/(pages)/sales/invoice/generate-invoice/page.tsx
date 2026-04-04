@@ -2493,31 +2493,52 @@ const getAllInvoices = async () => {
       isDeleted: false,
     };
 
-    let res = await getAllInvoice(localCompanyId, params);
+    const res = await getAllInvoice(localCompanyId, params);
 
-    if (res.success && res.data.length > 0) {
-      let lastInvoice = res.data[0];
+    if (res.success && res.data && res.data.length > 0) {
+      const lastInvoice = res.data[0];
 
-      const raw = String(lastInvoice.invoiceNumber ?? "");
-      const numericPart = raw.replace(/\D/g, "");
+      console.log("FULL RESPONSE :", res);
+      console.log("LAST INVOICE :", lastInvoice);
+      console.log("LAST INVOICE NUMBER :", lastInvoice.invoiceNumber);
+      console.log("LAST INVOICE PREFIX :", lastInvoice.invoicePrefix);
 
+      const rawInvoiceNumber = String(lastInvoice.invoiceNumber ?? "");
+
+      // invoiceNumber mathi only digits extract karo
+      const numericPart = rawInvoiceNumber.replace(/\D/g, "");
+
+      // jo blank hoy to 0
       const lastNum = parseInt(numericPart || "0", 10);
       const nextNum = lastNum + 1;
 
+      // 5 digit format
       const paddedNum = nextNum.toString().padStart(5, "0");
+
+      // prefix backend mathi hoy to te lo, nahi to default VV
+      const prefix = lastInvoice.invoicePrefix?.trim() || "VV";
 
       setInvoiceData((prev) => ({
         ...prev,
+        invoicePrefix: prefix,
         invoiceNumber: paddedNum,
       }));
     } else {
+      // first invoice
       setInvoiceData((prev) => ({
         ...prev,
+        invoicePrefix: "VV",
         invoiceNumber: "00001",
       }));
     }
   } catch (e) {
-    console.log(e);
+    console.log("getAllInvoices error :", e);
+
+    setInvoiceData((prev) => ({
+      ...prev,
+      invoicePrefix: "VV",
+      invoiceNumber: "00001",
+    }));
   }
 };
   

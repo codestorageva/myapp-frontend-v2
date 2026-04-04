@@ -312,7 +312,7 @@ const ViewInvoice = () => {
                         </button>
 
                         <button onClick={() => {
-                            setCustomerId(row.no);
+                            setCustomerId(row.invoiceId);
                             handleShow();
                         }}>
                             <img src='/assets/icons/delete.png' width={15} />

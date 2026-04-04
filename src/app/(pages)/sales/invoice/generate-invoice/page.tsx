@@ -2097,7 +2097,6 @@ const GenerateInvoice = () => {
   const router = useRouter();
   const param: Partial<GetAllParams> = {
     sortDirection: "asc",
-    isDeleted: false
   };
   const [customerData, setCustomerData] = useState<CustomerData[]>([]);
   const [itemList, setItemListData] = useState<GetAllItemData[]>([]);
@@ -2466,9 +2465,9 @@ const GenerateInvoice = () => {
 
     const baseAmount = isRCM
       ? Object.values(gstGroupedTotals).reduce(
-        (sum, group) => sum + group.taxableAmount,
-        0,
-      )
+          (sum, group) => sum + group.taxableAmount,
+          0,
+        )
       : finalTotal;
 
     const autoRound = Math.round(baseAmount) - baseAmount;
@@ -2483,18 +2482,7 @@ const GenerateInvoice = () => {
   const getAllInvoices = async () => {
     try {
       const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
-
-      const params: GetAllParams = {
-        keyword: "",
-        pageNumber: 0,
-        pageSize: 10,
-        sortBy: "invoiceId",
-        sortDirection: "asc",
-        status: true,
-        isDeleted: false,
-      };
-
-      let res = await getAllInvoice(localCompanyId, params);
+      let res = await getAllInvoice(localCompanyId ?? "");
       if (res.success) {
         if (res.data.length > 0) {
           let lastInvoice = res.data[res.data.length - 1];
@@ -2507,7 +2495,7 @@ const GenerateInvoice = () => {
           setInvoiceData({ ...invoiceData, invoiceNumber: paddedNum });
         }
       }
-    } catch (e) { }
+    } catch (e) {}
   };
 
   const getAllCustomer = async () => {
@@ -2548,8 +2536,8 @@ const GenerateInvoice = () => {
 
   const getAll = async () => {
     try {
-      const localCompanyId = localStorage.getItem('selectedCompanyId');
-      let res = await getAllItems(param as GetAllParams, localCompanyId ?? '')
+      const localCompanyId = localStorage.getItem("selectedCompanyId");
+      let res = await getAllItems(param as GetAllParams, localCompanyId ?? "");
       if (res.success) {
         setItemListData(res.data);
       } else {
@@ -2861,11 +2849,13 @@ const GenerateInvoice = () => {
                           name="term"
                           value={values.term}
                           onChange={(e) => {
-                            const selectedTerm = e.target.value;
-                            setFieldValue("term", selectedTerm);
-                            const invoiceDate = new Date(values.date);
-                            let dueDT = new Date(invoiceDate);
+                            const selectedTerm = e.target.value; // Get the selected value from the event
+                            setFieldValue("term", selectedTerm); // Update term field with selected value
 
+                            const invoiceDate = new Date(values.date);
+                            let dueDT = new Date(invoiceDate); // Create a copy of the invoice date
+
+                            // Switch case to determine the due date based on the selected term
                             switch (selectedTerm) {
                               case "Net 45":
                                 dueDT.setDate(invoiceDate.getDate() + 45);
@@ -2900,8 +2890,9 @@ const GenerateInvoice = () => {
                                 return;
                             }
 
+                            // Assuming formatDate is a function that formats the date
                             setFieldValue("dueDate", formatDate(dueDT));
-                          }}
+                          }} // <- Formik way
                           className="block w-full rounded-md border bg-white focus:outline-none border-gray-300 py-2 px-2 text-gray-900 focus:border-red-500 focus:ring-1 focus:ring-red-300 placeholder:text-gray-400 sm:text-sm sm:leading-6 font-inter"
                         >
                           {terms.map((term: string, index: number) => (
@@ -2967,6 +2958,7 @@ const GenerateInvoice = () => {
                               key={customer.customerId}
                               value={customer.customerId}
                             >
+                              {/* {customer.firstName + ' ' + customer.lastName} */}
                               {customer.customerCompanyName}
                             </option>
                           ))}
@@ -3069,16 +3061,104 @@ const GenerateInvoice = () => {
                             <td className="px-3 py-2">Rate</td>
                             <td className="px-3 py-2 text-right w-15">GST</td>
                             <td className="px-3 py-2 text-right">Amount</td>
+                            {/* <td className='px-3 py-2 text-right'>Final Amount</td> */}
                             <td className="px-3 py-2 w-10"></td>
                           </tr>
                         </thead>
+                        {/* <tbody>
+                                                    {rows.map((row, idx) => (
+                                                        <tr key={idx} className="border-t border-gray-200">
+                                                            <td className="p-1">
+                                                                <select
+                                                                    value={row.productId}
+                                                                    onChange={(e) => { handleSelectChange(idx, e.target.value) }}
+                                                                    className="w-full border bg-white py-1 focus:border-red-500 focus:ring-1 focus:ring-red-300 border-gray-300 rounded px-2 text-sm appearance-none"
+                                                                >
+                                                                    <option value="">Select an item</option>
+                                                                    {itemList.map((item: GetAllItemData) => (
+                                                                        <option key={item.productId} value={item.productId}>
+                                                                            {item.productName}
+                                                                        </option>
+                                                                    ))}
+                                                                    <option value="add_new" className='bg-[#af0000] text-white'> Add New Item</option>
+                                                                </select>
+                                                            </td>
+                                                            <td className="p-2 text-right">
+                                                                <input
+                                                                    type="number"
+                                                                    className="w-full focus:border-red-500 focus:ring-1 focus:ring-red-300 bg-white text-right border rounded px-2 py-1"
+                                                                    value={row.qty}
+                                                                    step="any"        
+                                                                    min={0}
+                                                                    onChange={(e) => {
+                                                                        const value = e.target.value;
 
+                                                                
+                                                                        if (value === '') {
+                                                                            handleQtyChange(idx, 1);
+                                                                            return;
+                                                                        }
+
+                                                                        const num = Number(value);
+                                                                        if (!isNaN(num)) {
+                                                                            handleQtyChange(idx, num);
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </td>
+
+                                                            <td className="p-2 text-right">
+
+
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="0"
+                                                                    className="w-full border rounded   focus:border-red-500 focus:ring-1 focus:ring-red-300 bg-white px-2 py-1 text-right"
+                                                                    value={row.rate === 0 ? 0 : row.rate}
+                                                                   
+                                                                    onChange={(e) => {
+                                                                        const value = e.target.value;
+
+                                                                        const updatedRows = [...rows];
+
+                                                                        if (value === '') {
+                                                                            updatedRows[idx].rate = 0;
+                                                                            updatedRows[idx].amount = 0;
+                                                                        } else {
+                                                                            const parsed = parseFloat(value);
+                                                                            updatedRows[idx].rate = isNaN(parsed) ? 0 : parsed;
+                                                                            updatedRows[idx].amount =
+                                                                                updatedRows[idx].rate * (updatedRows[idx].qty || 0);
+                                                                        }
+
+                                                                        setRows(updatedRows);
+                                                                    }}
+                                                                />
+                                                            </td>
+
+                                                            <td className='p-2 text-right '>
+                                                                {row.gstPer === 'NaN%' ? '0%' : row.gstPer}
+                                                            </td>
+
+                                                            <td className="p-2 text-right font-semibold flex-col">
+                                                                ₹ {row.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+
+                                                            </td>
+                                                          
+                                                            <td className="text-center">
+                                                                <button type='button' onClick={() => handleRemoveRow(idx)} className="text-red-500 text-sm hover:underline">✖</button>
+                                                            </td>
+                                                        </tr>
+                                                        
+                                                    ))}
+                                                </tbody> */}
                         <tbody>
                           {rows.map((row, idx) => {
                             const miningRows = getMiningRows(row);
 
                             return (
                               <React.Fragment key={idx}>
+                                {/* MAIN ITEM ROW */}
                                 <tr className="border-t border-gray-200">
                                   <td className="p-1">
                                     <select
@@ -3119,13 +3199,17 @@ const GenerateInvoice = () => {
                                       }
                                       onChange={(e) => {
                                         const value = e.target.value;
+
+                                        // Allow only digits, comma and dot
                                         if (!/^[0-9.,]*$/.test(value)) return;
 
+                                        // Update typing buffer
                                         setQtyInput((prev) => ({
                                           ...prev,
                                           [idx]: value,
                                         }));
 
+                                        // Remove commas for calculation
                                         const cleaned = value.replace(/,/g, "");
                                         const num = parseFloat(cleaned);
 
@@ -3142,6 +3226,27 @@ const GenerateInvoice = () => {
                                   </td>
 
                                   <td className="p-2 text-right">
+                                    {/* <input
+                                                                            type="number"
+                                                                            placeholder="0"
+                                                                            className="w-full border rounded focus:border-red-500 focus:ring-1 focus:ring-red-300 bg-white px-2 py-1 text-right"
+                                                                            value={row.rate === 0 ? 0 : row.rate}
+                                                                            onChange={(e) => {
+                                                                                const value = e.target.value;
+                                                                                const updatedRows = [...rows];
+
+                                                                                if (value === '') {
+                                                                                    updatedRows[idx].rate = 0;
+                                                                                    updatedRows[idx].amount = 0;
+                                                                                } else {
+                                                                                    const parsed = parseFloat(value);
+                                                                                    updatedRows[idx].rate = isNaN(parsed) ? 0 : parsed;
+                                                                                    updatedRows[idx].amount =
+                                                                                        updatedRows[idx].rate * (updatedRows[idx].qty || 0);
+                                                                                }
+                                                                                setRows(updatedRows);
+                                                                            }}
+                                                                        /> */}
                                     <input
                                       type="text"
                                       inputMode="decimal"
@@ -3155,8 +3260,10 @@ const GenerateInvoice = () => {
                                       onChange={(e) => {
                                         const value = e.target.value;
 
+                                        // Allow digits and dot only
                                         if (!/^\d*\.?\d*$/.test(value)) return;
 
+                                        // Save typing value (important for dot like "1.")
                                         setRateInput((prev) => ({
                                           ...prev,
                                           [idx]: value,
@@ -3204,6 +3311,7 @@ const GenerateInvoice = () => {
                                   </td>
                                 </tr>
 
+                                {/* 🔽 MINING CHARGES ROWS */}
                                 {miningRows.map((mRow, i) => (
                                   <tr key={i} className="">
                                     <td className="p-1">
@@ -3264,8 +3372,8 @@ const GenerateInvoice = () => {
                           This transaction is applicable for reverse charge
                         </span>
                       </div>
-                      {/* <div className="mt-4 flex flex-col lg:flex-row justify-between items-start gap-4">
-                 
+                      <div className="mt-4 flex flex-col lg:flex-row justify-between items-start gap-4">
+                        {/* Left Column: Table + Narration */}
                         <div className="flex flex-col w-full max-w-5xl gap-4">
                           <div className="bg-gray-100 p-2 rounded-md border border-gray-300">
                             <table className="min-w-full table-auto text-black">
@@ -3339,6 +3447,7 @@ const GenerateInvoice = () => {
                             </table>
                           </div>
 
+                          {/* Narration Box */}
                           <div className="w-full">
                             <label
                               htmlFor="narration"
@@ -3357,6 +3466,7 @@ const GenerateInvoice = () => {
                           </div>
                         </div>
 
+                        {/* Right Column: Grand Total */}
                         <div className="bg-gray-100 p-4 rounded-md border border-gray-300 w-full max-w-md">
                           <div className="flex justify-between text-sm text-gray-800">
                             <h4 className="text-base font-semibold mb-2 text-gray-700">
@@ -3402,8 +3512,18 @@ const GenerateInvoice = () => {
                           </div>
                           <div className="flex justify-between text-sm text-gray-800 mt-2">
                             <div>Round Off</div>
+                            {/* <div>{Math.round(finalTotal - 0.5) === finalTotal ? '₹ 0.00' : (finalTotal - Math.round(finalTotal)).toFixed(2)}</div> */}
                             <div>
-                           
+                              {/* <input
+                                                                type="number"
+                                                                className="border px-2 py-1 w-24 rounded text-right"
+                                                                value={roundOff.toFixed(2)}
+                                                                onChange={(e) => {
+                                                                    const value = parseFloat(e.target.value);
+                                                                    setRoundOff(isNaN(value) ? 0 : value);
+                                                                    setIsManualRoundOff(true); // 👈 VERY IMPORTANT
+                                                                }}
+                                                            /> */}
                               <input
                                 type="text"
                                 inputMode="decimal"
@@ -3412,6 +3532,7 @@ const GenerateInvoice = () => {
                                 onChange={(e) => {
                                   const value = e.target.value;
 
+                                  // Allow digits, dot and minus (roundoff negative pan hoy shake)
                                   if (!/^-?[0-9.]*$/.test(value)) return;
 
                                   setRoundOffInput(value);
@@ -3431,6 +3552,7 @@ const GenerateInvoice = () => {
                                   setIsManualRoundOff(true);
                                 }}
                                 onBlur={() => {
+                                  // Format to 2 decimal on blur
                                   setRoundOffInput(roundOff.toFixed(2));
                                 }}
                               />
@@ -3492,7 +3614,18 @@ const GenerateInvoice = () => {
 
                           <div className="border-t mt-3 pt-2 font-bold text-gray-900 flex justify-between">
                             <div>Grand Total</div>
-                         
+                            {/* <div> ₹ {(
+                                                        (finalTotal - otherChargesTotal - (finalTotal - Math.round(finalTotal)))
+                                                    ).toLocaleString('en-IN', {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    })}</div> */}
+                            {/* <div> ₹ {(
+                                                        (finalTotal + roundOff - otherChargesTotal)
+                                                    ).toLocaleString('en-IN', {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    })}</div> */}
                             <div>
                               ₹{" "}
                               {isRCM
@@ -3513,296 +3646,6 @@ const GenerateInvoice = () => {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   })}
-                            </div>
-                          </div>
-                        </div>
-                      </div> */}
-                      <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                        {/* Left Side: Table and Narration (8 columns out of 12) */}
-                        <div className="lg:col-span-8 flex flex-col gap-4">
-                          {/* Table Section with Horizontal Scroll */}
-                          <div className="bg-gray-100 p-2 rounded-md border border-gray-300 overflow-x-auto shadow-sm">
-                            <table className="min-w-full table-auto text-black">
-                              <thead>
-                                <tr className="bg-gray-100">
-                                  <td className="py-2 text-left text-sm">
-                                    GST Rate
-                                  </td>
-                                  <td className="px-4 py-2 text-left text-sm">
-                                    Taxable Amount (₹)
-                                  </td>
-
-                                  <td className="px-4 py-2 text-left text-sm">
-                                    IGST (%)
-                                  </td>
-                                  <td className="px-4 py-2 text-left text-sm">
-                                    IGST Amount (₹)
-                                  </td>
-
-                                  <td className="px-4 py-2 text-left text-sm">
-                                    CGST (%)
-                                  </td>
-                                  <td className="px-4 py-2 text-left text-sm">
-                                    CGST Amount (₹)
-                                  </td>
-                                  <td className="px-4 py-2 text-left text-sm">
-                                    SGST (%)
-                                  </td>
-                                  <td className="px-4 py-2 text-left text-sm">
-                                    SGST Amount (₹)
-                                  </td>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-gray-200 bg-white">
-                                {Object.entries(gstGroupedTotals).map(
-                                  ([gstRate, data]) => (
-                                    <tr
-                                      key={gstRate}
-                                      className="bg-white hover:bg-gray-50"
-                                    >
-                                      <td className="px-4 py-2 text-sm">
-                                        {gstRate}%
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {data.taxableAmount.toFixed(2)}
-                                      </td>
-
-                                      <td className="px-4 py-2 text-sm">
-                                        {data.igstPercent}%
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {data.igstAmount.toFixed(2)}
-                                      </td>
-
-                                      <td className="px-4 py-2 text-sm">
-                                        {data.cgstPercent}%
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {data.cgstAmount.toFixed(2)}
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {data.sgstPercent}%
-                                      </td>
-                                      <td className="px-4 py-2 text-sm">
-                                        {data.sgstAmount.toFixed(2)}
-                                      </td>
-                                    </tr>
-                                  ),
-                                )}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {/* Narration Section */}
-                          <div className="w-full">
-                            <label
-                              htmlFor="narration"
-                              className="block text-sm font-semibold text-gray-700 mb-1"
-                            >
-                              Narration / Remarks:
-                            </label>
-                            <textarea
-                              id="narration"
-                              rows={4}
-                              value={values.narration}
-                              onChange={handleChange}
-                              className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-1 focus:ring-blue-400 focus:outline-none text-sm"
-                              placeholder="Enter remarks or narration here..."
-                            ></textarea>
-                          </div>
-                        </div>
-
-                        {/* Right Side: Total Summary Card (4 columns out of 12) */}
-                        <div className="lg:col-span-4 bg-gray-100 p-4 rounded-md border border-gray-300 shadow-sm">
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <h4 className="text-sm font-bold text-gray-700">
-                                Total Taxable Amount
-                              </h4>
-                              <span className="text-sm font-bold">
-                                ₹{" "}
-                                {Object.values(gstGroupedTotals)
-                                  .reduce(
-                                    (sum, data) => sum + data.taxableAmount,
-                                    0,
-                                  )
-                                  .toFixed(2)}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between text-sm text-gray-800">
-                              <div>Total IGST</div>
-                              <div>
-                                ₹{" "}
-                                {Object.values(gstGroupedTotals)
-                                  .reduce(
-                                    (sum, data) => sum + data.igstAmount,
-                                    0,
-                                  )
-                                  .toFixed(2)}
-                              </div>
-                            </div>
-
-                            <div className="flex justify-between text-sm text-gray-800 mt-1">
-                              <div>Total CGST</div>
-                              <span>
-                                ₹{" "}
-                                {Object.values(gstGroupedTotals)
-                                  .reduce(
-                                    (sum, data) => sum + data.cgstAmount,
-                                    0,
-                                  )
-                                  .toFixed(2)}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between text-sm text-gray-800 mt-1">
-                              <div>Total SGST</div>
-                              <span>
-                                ₹{" "}
-                                {Object.values(gstGroupedTotals)
-                                  .reduce(
-                                    (sum, data) => sum + data.sgstAmount,
-                                    0,
-                                  )
-                                  .toFixed(2)}
-                              </span>
-                            </div>
-
-                            <div className="flex justify-between text-sm text-gray-800 mt-2">
-                              <div className="text-sm font-medium">
-                                Round Off
-                              </div>
-                              <input
-                                type="text"
-                                className="border border-gray-300 px-2 py-1 w-24 rounded text-right text-sm focus:ring-1 focus:ring-blue-400 focus:outline-none"
-                                value={roundOffInput}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (!/^-?[0-9.]*$/.test(val)) return;
-                                  setRoundOffInput(val);
-                                  const num = parseFloat(val);
-                                  setRoundOff(isNaN(num) ? 0 : num);
-                                }}
-                                onBlur={() =>
-                                  setRoundOffInput(roundOff.toFixed(2))
-                                }
-                              />
-                            </div>
-                            {/* 
-                            <div className="space-y-2">
-                              {otherCharges.map((item, index) => (
-                                <div
-                                  key={index}
-                                  className="flex gap-2 items-center"
-                                >
-                                  <input
-                                    type="text"
-                                    value={item.label}
-                                    className="border border-gray-300 px-2 py-1 flex-1 rounded text-xs"
-                                    placeholder="Label"
-                                    onChange={(e) =>
-                                      handleOtherChange(
-                                        index,
-                                        "label",
-                                        e.target.value,
-                                      )
-                                    }
-                                  />
-                                  <input
-                                    type="number"
-                                    value={item.value}
-                                    className="border border-gray-300 px-2 py-1 w-20 rounded text-right text-xs"
-                                    placeholder="0.00"
-                                    onChange={(e) =>
-                                      handleOtherChange(
-                                        index,
-                                        "value",
-                                        e.target.value,
-                                      )
-                                    }
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveOtherRow(index)}
-                                    className="text-red-500 hover:scale-110"
-                                  >
-                                    ✖
-                                  </button>
-                                </div>
-                              ))}
-                            </div> */}
-                            {/* Other Charges List Section */}
-                            <div className="space-y-3 mt-2">
-                              {otherCharges.map((item, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-1 mt-2"
-                                >
-                                  <input
-                                    type="text"
-                                    value={item.label}
-                                    placeholder="Label"
-                                    onChange={(e) =>
-                                      handleOtherChange(
-                                        index,
-                                        "label",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="border px-2 py-1 flex-1 min-w-0 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                  />
-                                  <input
-                                    type="number"
-                                    value={item.value}
-                                    placeholder="0.00"
-                                    onChange={(e) =>
-                                      handleOtherChange(
-                                        index,
-                                        "value",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="border px-2 py-1 w-16 rounded text-right text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveOtherRow(index)}
-                                    className="text-red-500 font-bold px-1 hover:bg-red-50 rounded"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                            <button
-                              onClick={handleAddOtherRow}
-                              className="text-sm px-3 py-1 bg-[#af0000] text-white rounded hover:bg-red-600 mt-3"
-                            >
-                              Add Others
-                            </button>
-
-                            <div className="border-t mt-3 pt-2 font-bold text-gray-900 flex justify-between">
-                              <span>Grand Total</span>
-                              <span>
-                                ₹{" "}
-                                {isRCM
-                                  ? (
-                                    Object.values(gstGroupedTotals).reduce(
-                                      (sum, d) => sum + d.taxableAmount,
-                                      0,
-                                    ) + roundOff
-                                  ).toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                  })
-                                  : (
-                                    finalTotal +
-                                    roundOff -
-                                    otherChargesTotal
-                                  ).toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                  })}
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -3868,4 +3711,3 @@ const GenerateInvoice = () => {
 };
 
 export default GenerateInvoice;
-

@@ -521,7 +521,7 @@ const GenerateInvoice = () => {
   const getAllInvoices = async () => {
     try {
       const localCompanyId = localStorage.getItem('selectedCompanyId');
-      let res = await getAllItems(param as GetAllParams, localCompanyId ?? '')
+      let res = await getAllInvoice(param as GetAllParams, localCompanyId ?? '')
       if (res.success) {
         if (res.data.length > 0) {
           let lastInvoice = res.data[res.data.length - 1];

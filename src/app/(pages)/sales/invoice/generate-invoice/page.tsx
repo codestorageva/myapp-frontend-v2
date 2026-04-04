@@ -2478,63 +2478,64 @@ const GenerateInvoice = () => {
     // 🔥 IMPORTANT: Sync input buffer
     setRoundOffInput(roundedValue.toFixed(2));
   }, [isRCM, finalTotal, gstGroupedTotals, isManualRoundOff]);
+ const getAllInvoices = async () => {
+    try {
+      const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
 
-const getAllInvoices = async () => {
-  try {
-    const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
+      const params: GetAllParams = {
+        keyword: "",
+        pageNumber: 0,
+        pageSize: 1,
+        sortBy: "invoiceId",
+        sortDirection: "desc",
+        status: true,
+        isDeleted: false,
+      };
 
-    const params: GetAllParams = {
-      keyword: "",
-      pageNumber: 0,
-      pageSize: 1,
-      sortBy: "invoiceId",
-      sortDirection: "desc",
-      status: true,
-      isDeleted: false,
-    };
+      const res = await getAllInvoice(localCompanyId, params);
 
-    const res = await getAllInvoice(localCompanyId, params);
+      if (res.success && res.data && res.data.length > 0) {
+        const lastInvoice = res.data[0];
 
-    if (res.success && res.data && res.data.length > 0) {
-      const lastInvoice = res.data[0];
+        console.log("LAST INVOICE :", lastInvoice);
+        console.log("LAST INVOICE NUMBER :", lastInvoice.invoiceNumber);
 
-      console.log("LAST INVOICE :", lastInvoice);
-      console.log("LAST INVOICE NUMBER :", lastInvoice.invoiceNumber);
+        const rawInvoiceNumber = String(lastInvoice.invoiceNumber ?? "").trim();
 
-      const rawInvoiceNumber = String(lastInvoice.invoiceNumber ?? "").trim();
+        // prefix letters extract
+        const prefix = rawInvoiceNumber.match(/^[A-Za-z]+/)?.[0] || "VV";
 
-      // prefix letters extract
-      const prefix = rawInvoiceNumber.match(/^[A-Za-z]+/)?.[0] || "VV";
+        // number part extract
+        const numericPart = rawInvoiceNumber.match(/\d+$/)?.[0] || "0";
 
-      // number part extract
-      const numericPart = rawInvoiceNumber.match(/\d+$/)?.[0] || "0";
+        const lastNum = parseInt(numericPart, 10);
+        const nextNum = lastNum + 1;
 
-      const lastNum = parseInt(numericPart, 10);
-      const nextNum = lastNum + 1;
+        const paddedNum = nextNum.toString().padStart(numericPart.length, "0");
 
-      const paddedNum = nextNum.toString().padStart(numericPart.length, "0");
+        const newInvoiceNumber = `${prefix}${paddedNum}`;
 
-      const newInvoiceNumber = `${prefix}${paddedNum}`;
+        setInvoiceData((prev) => ({
+          ...prev,
+          invoiceNumber: paddedNum,
+          invoicePrefix: prefix
+        }));
+      } else {
+        setInvoiceData((prev) => ({
+          ...prev,
+          invoiceNumber: "",
+          invoicePrefix: ""
+        }));
+      }
+    } catch (e) {
+      console.log("getAllInvoices error :", e);
 
       setInvoiceData((prev) => ({
         ...prev,
-        invoiceNumber: newInvoiceNumber,
-      }));
-    } else {
-      setInvoiceData((prev) => ({
-        ...prev,
-        invoiceNumber: "VV00001",
+        invoiceNumber: "",
       }));
     }
-  } catch (e) {
-    console.log("getAllInvoices error :", e);
-
-    setInvoiceData((prev) => ({
-      ...prev,
-      invoiceNumber: "VV00001",
-    }));
-  }
-};
+  };
   
   const getAllCustomer = async () => {
     try {

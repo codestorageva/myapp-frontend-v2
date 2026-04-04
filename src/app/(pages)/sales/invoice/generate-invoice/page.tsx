@@ -2479,34 +2479,48 @@ const GenerateInvoice = () => {
     setRoundOffInput(roundedValue.toFixed(2));
   }, [isRCM, finalTotal, gstGroupedTotals, isManualRoundOff]);
 
- const getAllInvoices = async () => {
-    try {
-      const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
-      const params: GetAllParams = {
-        keyword: "",
-        pageNumber: 0,
-        pageSize: 10,
-        sortBy: "invoiceId",
-        sortDirection: "asc",
-        status: true,
-        isDeleted: false,
-      };
+const getAllInvoices = async () => {
+  try {
+    const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
 
-      let res = await getAllInvoice(localCompanyId, params);
-      if (res.success) {
-        if (res.data.length > 0) {
-          let lastInvoice = res.data[res.data.length - 1];
-          console.log("Last Invoice : ", lastInvoice.invoiceNumber);
-          let lastNum = parseInt(lastInvoice.invoiceNumber, 10); // "00003" → 3
-          let nextNum = lastNum + 1;
+    const params: GetAllParams = {
+      keyword: "",
+      pageNumber: 0,
+      pageSize: 1,
+      sortBy: "invoiceId",
+      sortDirection: "desc",
+      status: true,
+      isDeleted: false,
+    };
 
-          // Pad it with leading zeros to keep 5 digits (e.g., 00004)
-          let paddedNum = nextNum.toString().padStart(5, "0");
-          setInvoiceData({ ...invoiceData, invoiceNumber: paddedNum });
-        }
-      }
-    } catch (e) { }
-  };
+    let res = await getAllInvoice(localCompanyId, params);
+
+    if (res.success && res.data.length > 0) {
+      let lastInvoice = res.data[0];
+
+      const raw = String(lastInvoice.invoiceNumber ?? "");
+      const numericPart = raw.replace(/\D/g, "");
+
+      const lastNum = parseInt(numericPart || "0", 10);
+      const nextNum = lastNum + 1;
+
+      const paddedNum = nextNum.toString().padStart(5, "0");
+
+      setInvoiceData((prev) => ({
+        ...prev,
+        invoiceNumber: paddedNum,
+      }));
+    } else {
+      setInvoiceData((prev) => ({
+        ...prev,
+        invoiceNumber: "00001",
+      }));
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+  
   const getAllCustomer = async () => {
     try {
       const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";

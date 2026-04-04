@@ -2498,37 +2498,32 @@ const getAllInvoices = async () => {
     if (res.success && res.data && res.data.length > 0) {
       const lastInvoice = res.data[0];
 
-      console.log("FULL RESPONSE :", res);
       console.log("LAST INVOICE :", lastInvoice);
       console.log("LAST INVOICE NUMBER :", lastInvoice.invoiceNumber);
-      console.log("LAST INVOICE PREFIX :", lastInvoice.invoicePrefix);
 
-      const rawInvoiceNumber = String(lastInvoice.invoiceNumber ?? "");
+      const rawInvoiceNumber = String(lastInvoice.invoiceNumber ?? "").trim();
 
-      // invoiceNumber mathi only digits extract karo
-      const numericPart = rawInvoiceNumber.replace(/\D/g, "");
+      // prefix letters extract
+      const prefix = rawInvoiceNumber.match(/^[A-Za-z]+/)?.[0] || "VV";
 
-      // jo blank hoy to 0
-      const lastNum = parseInt(numericPart || "0", 10);
+      // number part extract
+      const numericPart = rawInvoiceNumber.match(/\d+$/)?.[0] || "0";
+
+      const lastNum = parseInt(numericPart, 10);
       const nextNum = lastNum + 1;
 
-      // 5 digit format
-      const paddedNum = nextNum.toString().padStart(5, "0");
+      const paddedNum = nextNum.toString().padStart(numericPart.length, "0");
 
-      // prefix backend mathi hoy to te lo, nahi to default VV
-      const prefix = lastInvoice.invoicePrefix?.trim() || "VV";
+      const newInvoiceNumber = `${prefix}${paddedNum}`;
 
       setInvoiceData((prev) => ({
         ...prev,
-        invoicePrefix: prefix,
-        invoiceNumber: paddedNum,
+        invoiceNumber: newInvoiceNumber,
       }));
     } else {
-      // first invoice
       setInvoiceData((prev) => ({
         ...prev,
-        invoicePrefix: "VV",
-        invoiceNumber: "00001",
+        invoiceNumber: "VV00001",
       }));
     }
   } catch (e) {
@@ -2536,8 +2531,7 @@ const getAllInvoices = async () => {
 
     setInvoiceData((prev) => ({
       ...prev,
-      invoicePrefix: "VV",
-      invoiceNumber: "00001",
+      invoiceNumber: "VV00001",
     }));
   }
 };

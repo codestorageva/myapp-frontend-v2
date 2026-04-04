@@ -519,10 +519,21 @@ const GenerateInvoice = () => {
     setRoundOffInput(roundedValue.toFixed(2));
   }, [isRCM, finalTotal, gstGroupedTotals, isManualRoundOff]);
 
-  const getAllInvoices = async () => {
+const getAllInvoices = async () => {
     try {
-      const localCompanyId = localStorage.getItem('selectedCompanyId');
-      let res = await getAllInvoice(localCompanyId, param);
+      const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
+
+      const params: GetAllParams = {
+        keyword: "",
+        pageNumber: 0,
+        pageSize: 10,
+        sortBy: "invoiceId",
+        sortDirection: "asc",
+        status: true,
+        isDeleted: false,
+      };
+
+      let res = await getAllInvoice(localCompanyId, params);
       if (res.success) {
         if (res.data.length > 0) {
           let lastInvoice = res.data[res.data.length - 1];
@@ -535,9 +546,8 @@ const GenerateInvoice = () => {
           setInvoiceData({ ...invoiceData, invoiceNumber: paddedNum });
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   };
-
   const getAllCustomer = async () => {
     try {
       const localCompanyId = localStorage.getItem("selectedCompanyId") ?? "";
